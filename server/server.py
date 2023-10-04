@@ -11,6 +11,7 @@ from threading import Thread
 
 tz = pytz.timezone('Asia/Shanghai')
 
+
 class WhatsNextServerHTTP:
     def __init__(self, wnserver, port) -> None:
         self.wnserver = wnserver
@@ -25,6 +26,7 @@ class WhatsNextServerHTTP:
         app = web.Application(handlers_array, **settings)
         app.listen(port)
         Thread(target=ioloop.IOLoop.instance().start).start()
+
 
 class WNSHandler(web.RequestHandler):
     def __init__(self, *args, wnserver):
@@ -77,7 +79,8 @@ class ActionSet:
             lines = file.readlines()
             for line in lines:
                 content = json.loads(line)
-                self.actions.append([content['id'], content['time'], content['action'], line.strip()])
+                self.actions.append(
+                    [content['id'], content['time'], content['action'], line.strip()])
                 self.status_id = max(self.status_id, content['id'])
 
     def __save(self):
@@ -92,8 +95,10 @@ class ActionSet:
                 return self.status_id
             action_time = datetime.now(tz)
             self.status_id += 1
-            ser = json.dumps({'id': self.status_id, 'time': str(action_time), 'action': action})
-            self.actions.append([self.status_id, action_time.timestamp(), action, ser])
+            ser = json.dumps(
+                {'id': self.status_id, 'time': str(action_time), 'action': action})
+            self.actions.append(
+                [self.status_id, action_time.timestamp(), action, ser])
             self.__save()
         finally:
             self.__lock.release()
@@ -107,5 +112,7 @@ if __name__ == '__main__':
     # action_set = ActionSet(f'.db/hwaipy.as')
     # action_set.append(action_set.status_id, {'a': 3})
 
+    port = 8000
     wnserver = WhatsNextServer('.db')
-    wnserver_http = WhatsNextServerHTTP(wnserver, 800)
+    wnserver_http = WhatsNextServerHTTP(wnserver, port)
+    print(f"What's Next server started at :{port}.")

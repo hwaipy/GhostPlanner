@@ -1,92 +1,74 @@
 import wnserver from './Server';
+import { ref } from 'vue';
 
 class WhatsNext {
-  inited = false;
   status_id = 0;
   actions = [];
-  task_model: any[] = [
-    {
-      label: '2',
-      ee: 'ee',
-      avatar: 'https://cdn.quasar.dev/img/boy-avatar.png',
-      children: [
-        {
-          label: 'Good food (with icon)',
-          icon: 'restaurant_menu',
-          children: [
-            { label: 'Quality ingredients' },
-            { label: 'Good recipe' },
-          ],
-        },
-        {
-          label: 'Good service (disabled node with icon)',
-          icon: 'room_service',
-          disabled: true,
-          children: [
-            { label: 'Prompt attention' },
-            { label: 'Professional waiter' },
-          ],
-        },
-        {
-          label: 'Pleasant surroundings (with icon)',
-          icon: 'photo',
-          children: [
-            {
-              label: 'Happy atmosphere (with image)',
-              img: 'https://cdn.quasar.dev/img/logo_calendar_128px.png',
-            },
-            { label: 'Good table presentation' },
-            { label: 'Pleasing decor' },
-          ],
-        },
-      ],
-    },
-  ];
-
+  task_model: any = ref({
+    label: -1,
+    title: 'root',
+    children: [],
+    parent: null,
+  });
   tasks: any = {};
 
   async init() {
-    if (this.inited) throw 'Already initted.';
+    this.status_id = 0;
+    this.actions = [];
+    this.task_model.value.children.splice(0, this.task_model.value.children.length);
+    this.tasks = {};
+
     const actions = await wnserver.get_new_actions(-1);
     for (const i in actions) {
       const action = actions[i];
-      this.new_action(actions.id, action.action);
+      this.new_action(action.id, action.action);
     }
-    this.inited = true;
-
-    const tm = this.task_model;
-    setInterval(function () {
-      console.log('inte');
-      tm[0]['label'] = tm[0]['label'] + '0';
-      tm.push({
-        label: '2',
-      });
-    }, 1000);
+    // setInterval(() => {
+    //   this.new_action(this.status_id, { Type: 'CreateTask', Title: 'Feature ++', IsProject: true, Parent: 1 });
+    //   this.status_id++;
+    // }, 2000);
   }
 
   new_action(id: number, action: any) {
     switch (action.Type) {
       case 'CreateTask':
         const task = {
-          id: id,
-          Title: action.Title,
+          label: id,
+          title: action.Title,
+          isProject: action.IsProject,
+          children: [],
+          parent: action.Parent ? this.tasks[action.Parent] : null,
         };
-        this.tasks[id] = task;
-        this.task_model.push(task);
-        // console.log('C');
-        // console.log(this.task_model[0]['label']);
-        // this.task_model[0]['label'] = 'eeee';
+        const parentChildrenList = task.parent ? this.tasks[action.Parent].children : this.task_model.value.children;
+        parentChildrenList.push(task);
+        this.tasks[id] = parentChildrenList[parentChildrenList.length - 1];
         break;
       case 'ModifyTask':
+        const modifiedTask = this.tasks[action.Task];
         console.log('M');
+
+        // if (action.Property === 'Children') {
+        //   const parentChildrenList = modifiedTask.parent ? modifiedTask.parent.children : this.task_model.value;
+        //   const iInParent = parentChildrenList.indexOf(this.tasks[action.NewValue[i]]);
+
+        //   modifiedTask.children.splice(0, modifiedTask.children.length);
+        //   for (const i in action.NewValue) {
+        //     modifiedTask.children.push(this.tasks[action.NewValue[i]]);
+
+        //     const iInRoot = this.task_model.value.indexOf(this.tasks[action.NewValue[i]]);
+        //     if (iInRoot >= 0) {
+        //       this.task_model.value.splice(iInRoot, 1);
+        //     }
+        //   }
+        // }
         break;
       default:
         console.log('Unknown action type: ' + action.Type);
     }
   }
 
-  test() {
-    wnserver.test();
+  get_task_node(id: number) {
+    return this.tasks[id];
   }
 }
 
