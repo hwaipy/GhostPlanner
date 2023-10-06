@@ -1,5 +1,5 @@
 class WhatsNextServer {
-  server_url = 'http://localhost:8000/s/';
+  server_url = 'http://localhost:8002/s/';
 
   test() {
     this.get_new_actions(15);

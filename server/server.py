@@ -112,7 +112,7 @@ if __name__ == '__main__':
     # action_set = ActionSet(f'.db/hwaipy.as')
     # action_set.append(action_set.status_id, {'a': 3})
 
-    port = 8000
+    port = 8002
     wnserver = WhatsNextServer('.db')
     wnserver_http = WhatsNextServerHTTP(wnserver, port)
     print(f"What's Next server started at :{port}.")
