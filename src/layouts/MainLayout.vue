@@ -54,7 +54,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import ProjectView from '../view/ProjectView.vue';
+import ProjectView from '../view/projectview/ProjectView.vue';
 import wn from '../core/WhatsNext';
 
 wn.init();

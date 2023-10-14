@@ -6,7 +6,7 @@ class WhatsNext {
   actions = [];
   task_model: any = ref({
     label: -1,
-    title: 'root',
+    title: '',
     children: [],
     parent: null,
   });
@@ -23,10 +23,6 @@ class WhatsNext {
       const action = actions[i];
       this.new_action(action.id, action.action);
     }
-    // setInterval(() => {
-    //   this.new_action(this.status_id, { Type: 'CreateTask', Title: 'Feature ++', IsProject: true, Parent: 1 });
-    //   this.status_id++;
-    // }, 2000);
   }
 
   new_action(id: number, action: any) {
@@ -38,6 +34,7 @@ class WhatsNext {
           isProject: action.IsProject,
           children: [],
           parent: action.Parent ? this.tasks[action.Parent] : null,
+          set_property: (key: string, value: any) => this.set_property(id, key, value),
         };
         const parentChildrenList = task.parent ? this.tasks[action.Parent].children : this.task_model.value.children;
         parentChildrenList.push(task);
@@ -68,7 +65,18 @@ class WhatsNext {
   }
 
   get_task_node(id: number) {
+    if (id == null) return this.task_model.value;
     return this.tasks[id];
+  }
+
+  set_property(id: number, key: string, value: any) {
+    console.log('setttingggg... ' + id + '   ' + key + '    ' + value);
+    const action = { id: 10, time: '2023-09-29 17:10:21.563623+08:00', action: { Type: 'CreateTask', Title: '原理验证', IsProject: true, Parent: 9 } };
+
+    console.log(action);
+
+    // this.actions.push(action);
+    // this.new_action(action.id, action.action);
   }
 }
 
