@@ -19,7 +19,7 @@
                 <TaskTreeList :model="taskView(selectedProject)" @selectionChanged="(s) => (selectedTask = s)"></TaskTreeList>
               </template>
               <template v-slot:after>
-                <InformationPanel :node="wn.get_task_node(selectedTask)"></InformationPanel>
+                <InformationPanel :node="wn.get_task_node(selectedTask)" @gotoProject="(id) => (selectedProject = id)" :validTags="wn.tags"></InformationPanel>
               </template>
             </q-splitter>
           </q-page>
