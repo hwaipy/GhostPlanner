@@ -5,15 +5,15 @@ import moment from 'moment';
 class WhatsNext {
   status_id = 0;
   actions = [];
-  task_model: any = ref({
+  task_model = ref({
     label: -1,
     title: '',
     children: [],
     parent: null,
   });
   tasks: any = {};
-  validProperties = ['title', 'status', 'flagged', 'tags', 'estimatedDuration'];
-  tags: [any] = ['Errands'];
+  validProperties = ['title', 'status', 'flagged', 'tags', 'estimatedDuration', 'deferUntil', 'due'];
+  tags = [];
 
   async init() {
     this.status_id = 0;
@@ -42,7 +42,8 @@ class WhatsNext {
           tags: [],
           flagged: false,
           estimatedDuration: 0,
-          deferUntil: null,
+          deferUntil: -1,
+          due: -1,
           set_property: (key: string, value: any) => this.set_property(id, key, value),
           get_project_node: () => this.get_project_node(this.get_task_node(id)),
         };
@@ -54,12 +55,15 @@ class WhatsNext {
         const modifiedTask = this.tasks[action.task];
         const property = action.property;
         if (this.validProperties.includes(property)) {
-          modifiedTask[property] = action.newValue;
-          if (property === 'tags') {
-            for (const iTag in action.newValue) {
-              const tag: any = action.newValue[iTag];
-              if (!this.tags.includes(tag)) {
-                this.tags.push(tag);
+          if (!equals(modifiedTask[property], action.oldValue)) console.log('The oldValue is not match: ', action.task, action.property, modifiedTask[property], action.oldValue);
+          else {
+            modifiedTask[property] = action.newValue;
+            if (property === 'tags') {
+              for (const iTag in action.newValue) {
+                const tag: any = action.newValue[iTag];
+                if (!this.tags.includes(tag)) {
+                  this.tags.push(tag);
+                }
               }
             }
           }
@@ -93,11 +97,15 @@ class WhatsNext {
   }
 
   set_property(task: number, key: string, newValue: any) {
+    this.create_action({ type: 'ModifyTask', task: task, property: key, oldValue: this.get_task_node(task)[key], newValue: newValue });
+  }
+
+  create_action(content: any) {
     this.status_id += 1;
-    const oldValue = this.get_task_node(task)[key];
-    const action = { id: this.status_id, time: moment().format('YYYY-MM-DD HH:mm:ss.SSSSSS+08:00'), action: { type: 'ModifyTask', task: task, property: key, oldValue: oldValue, newValue: newValue } };
+    const action = { id: this.status_id, time: moment().format('YYYY-MM-DD HH:mm:ss.SSSSSS+08:00'), action: content };
     this.actions.push(action);
     this.new_action(action.id, action.action);
+    wnserver.append(action);
   }
 
   get_project_node(taskNode: any): any {
@@ -108,6 +116,18 @@ class WhatsNext {
     if (taskNode.isProject) return taskNode;
     return this.get_project_node(taskNode.parent);
   }
+}
+
+function equals(a: any, b: any) {
+  if (Array.isArray(a)) {
+    if (Array.isArray(b)) {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+      }
+      return true;
+    } else return false;
+  } else return a == b;
 }
 
 const wn = new WhatsNext();

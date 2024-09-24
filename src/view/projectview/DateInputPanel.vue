@@ -27,18 +27,26 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
+import moment from 'moment';
+
 const props = defineProps<{
   node: any;
+  value: any;
+  setValue: (v: number) => any;
 }>();
-const selectedNode = computed(() => {
-  return props.node;
+const selectedValue = computed(() => {
+  return props.value;
 });
 const dateModel = ref('');
-watch(selectedNode, async (newV: any, oldV: any) => {
-  dateModel.value = selectedNode.value.estimatedDuration > 0 ? formatEstimatedDuration(selectedNode.value.estimatedDuration) : '';
-});
+const date = ref('2019-02-01 12:44TT');
 
-const date = ref('2019-02-01 12:44');
+function onSelectionValueChange() {
+  date.value = props.value >= 0 ? moment(props.value).format('YYYY-MM-DD HH:mm') : '';
+}
+onSelectionValueChange();
+watch(selectedValue, async (newV: any, oldV: any) => {
+  onSelectionValueChange();
+});
 </script>
 
 <style></style>

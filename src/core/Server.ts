@@ -17,6 +17,30 @@ class WhatsNextServer {
       console.log('HTTP-Error in FETCH: ' + response.status);
     }
   }
+  
+  async append(action: any) {
+    const response = await fetch(this.server_url + 'AppendAction', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(action)
+    });
+    console.log(response);
+    
+    if (response.ok) {
+      // const content = await response.text();
+      // const actions = JSON.parse(content);
+      // return actions;
+      console.log('ok!!!');
+      
+    } else {
+      console.log('HTTP-Error in FETCH: ' + response.status);
+    }
+    console.log('try contact server');
+    
+  }
 }
 
 const wnserver = new WhatsNextServer();

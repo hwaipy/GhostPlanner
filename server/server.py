@@ -34,6 +34,7 @@ class WNSHandler(web.RequestHandler):
         self.wnserver = wnserver
 
     def get(self, func):
+        print('in get!!!')
         self.set_header("Access-Control-Allow-Origin", "*")
         if func == 'GetActions':
             after = self.get_arguments('after') + [0]
@@ -41,6 +42,16 @@ class WNSHandler(web.RequestHandler):
             actions = self.wnserver.get_actions('hwaipy', after)
             self.set_status(200)
             self.write(actions)
+        else:
+            raise web.HTTPError(404)
+
+    def post(self, func):
+        print('in post!!!')
+        self.set_header("Access-Control-Allow-Origin", "*")
+        if func == 'AppendAction':
+            print('append!')
+            self.set_status(200)
+            self.write('ok')
         else:
             raise web.HTTPError(404)
 

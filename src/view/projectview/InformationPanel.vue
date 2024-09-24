@@ -1,7 +1,7 @@
 <template>
   <q-list separator class="info-list" v-if="node.label > -1">
     <InformationPanelCard label="Title">
-      <q-input v-model="title" outlined autogrow debounce="5000" dense class="info-list-item-input" />
+      <q-input v-model="title" outlined autogrow debounce="5000" dense class="info-list-item-input" oninput="this.value = this.value.replaceAll('\n', '')" @keyup.enter="onInputChangeComplete" />
     </InformationPanelCard>
     <InformationPanelCard label="Action">
       <div class="info-list-item-label">Status: {{ status }}</div>
@@ -32,18 +32,17 @@
     </InformationPanelCard>
     <InformationPanelCard label="Dates">
       <div class="info-list-item-label">Estimated Duration:</div>
-      <q-input v-model="estimatedDurationModel" ref="inputRef" outlined dense hide-bottom-space @blur="estimatedDurationInputBlur" :rules="[(val) => parseEstimatedDuration(val) >= 0 || 'Invalid expression.']" class="info-list-item-input info-list-item-input-duration" />
-      <FormattedInput :model="node.estimatedDuration" :rules="[(val) => parseEstimatedDuration(val) >= 0 || 'Invalid expression.']"></FormattedInput>
+      <FormattedInput :node="node" :value="node.estimatedDuration" :setValue="(v: number) => node.set_property('estimatedDuration', v)" :rules="[(val: any) => parseEstimatedDuration(val) >= 0 || 'Invalid expression.']" :parser="parseEstimatedDuration" :formatter="formatEstimatedDuration"></FormattedInput>
       <p></p>
       <div class="info-list-item-label">Defer Until:</div>
-      <!-- <DateInputPanel :node="node"></DateInputPanel> -->
+      <DateInputPanel :node="node" :value="node.deferUntil" :setValue="(v: number) => node.set_property('deferUntil', v)"></DateInputPanel>
     </InformationPanelCard>
   </q-list>
   <div class="text-h5 empty-selection" v-else>No Selection</div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import InformationPanelCard from './InformationPanelCard.vue';
 import DateInputPanel from './DateInputPanel.vue';
 import FormattedInput from './components/FormattedInput.vue';
@@ -52,9 +51,6 @@ const props = defineProps<{
   node: any;
   validTags: [any];
 }>();
-const selectedNode = computed(() => {
-  return props.node;
-});
 
 const title = computed({
   get() {
@@ -123,10 +119,13 @@ const newTag = (val: any, done: any) => {
   }
 };
 
-const estimatedDurationModel = ref('');
+const onInputChangeComplete = (evt) => {
+  evt.target.blur();
+  evt.target.select();
+};
+
 const re_number = new RegExp('^[0-9]+$');
-const re_duration = new RegExp('^(([0-9]+)y(ear(s)?)?)?(([0-9]+)m(onth(s)?)?)?(([0-9]+)w(eek(s)?)?)?(([0-9]+)d(ay(s)?)?)?(([0-9]+)h(our(s)?)?)?(([0-9]+)m(inute(s)?)?)?(([0-9]+)s(econd(s)?)?)?$');
-const inputRef = ref(null);
+const re_duration = new RegExp('^(([0-9]+)y(ear(s)?)?)?(([0-9]+)m(onth(s)?)?)?(([0-9]+)w(eek(s)?)?)?(([0-9]+)d(ay(s)?)?)?(([0-9]+)h(our(s)?)?)?(([0-9]+)m(in(ute(s)?)?)?)?(([0-9]+)s(econd(s)?)?)?$');
 const parseEstimatedDuration = (val: string) => {
   if (val.length == 0) return 0;
   else if (re_number.exec(val)) return parseInt(val);
@@ -139,10 +138,10 @@ const parseEstimatedDuration = (val: string) => {
       newValueInSecond += m_duration[14] ? parseInt(m_duration[14]) * 24 * 3600 : 0;
       newValueInSecond += m_duration[18] ? parseInt(m_duration[18]) * 3600 : 0;
       newValueInSecond += m_duration[22] ? parseInt(m_duration[22]) * 60 : 0;
-      newValueInSecond += m_duration[26] ? parseInt(m_duration[26]) * 1 : 0;
-      if (newValueInSecond == 0) return -1;
+      newValueInSecond += m_duration[27] ? parseInt(m_duration[27]) * 1 : 0;
+      if (newValueInSecond == 0) return NaN;
       return newValueInSecond;
-    }
+    } else return NaN;
   }
 };
 const formatEstimatedDuration = (value: number) => {
@@ -153,14 +152,7 @@ const formatEstimatedDuration = (value: number) => {
   const rm2 = rm1 % 3600;
   const minute = parseInt(rm2 / 60);
   const second = parseInt(rm2 % 60);
-  return (day ? day + 'd ' : '') + (hour ? hour + 'h ' : '') + (minute ? minute + 'm ' : '') + (second ? second + 's ' : '');
-};
-watch(selectedNode, async (newV: any, oldV: any) => {
-  estimatedDurationModel.value = selectedNode.value.estimatedDuration > 0 ? formatEstimatedDuration(selectedNode.value.estimatedDuration) : '';
-});
-const estimatedDurationInputBlur = (evt) => {
-  const newValue = parseEstimatedDuration(estimatedDurationModel.value);
-  if (newValue >= 0) props.node.set_property('estimatedDuration', newValue);
+  return (day ? day + 'd ' : '') + (hour ? hour + 'h ' : '') + (minute ? minute + 'min ' : '') + (second ? second + 's ' : '');
 };
 </script>
 
@@ -182,6 +174,9 @@ const estimatedDurationInputBlur = (evt) => {
 }
 .info-list-item-input {
   background-color: white;
+}
+.info-list-item-input-formatted .q-field__bottom {
+  background-color: rgb(245, 245, 245);
 }
 .info-panel-tags {
   background-color: white;
