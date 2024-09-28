@@ -26,7 +26,7 @@ watch(selectedValue, async (newV: any, oldV: any) => {
   onSelectionValueChange();
 });
 
-const onInputBlur = (evt) => {
+const onInputBlur = () => {
   const newValue = props.parser(inputModel.value);
   if (!isNaN(newValue)) {
     props.setValue(newValue);

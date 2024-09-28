@@ -7,7 +7,7 @@
       <div class="info-list-item-label">Status: {{ status }}</div>
       <div class="row">
         <q-btn-toggle
-          class="col-10"
+          class="info-panel-task-status-toggle"
           v-model="status"
           toggle-color="blue-2"
           :options="[
@@ -18,7 +18,9 @@
           rounded
           unelevated
           size="sm"
+          no-caps
         />
+        <div class="col-2"></div>
         <q-btn class="col-1" :color="flagged ? 'amber-4' : 'white'" icon="tour" unelevated size="sm" @click="() => (flagged = !flagged)" />
       </div>
       <p></p>
@@ -32,10 +34,13 @@
     </InformationPanelCard>
     <InformationPanelCard label="Dates">
       <div class="info-list-item-label">Estimated Duration:</div>
-      <FormattedInput :node="node" :value="node.estimatedDuration" :setValue="(v: number) => node.set_property('estimatedDuration', v)" :rules="[(val: any) => parseEstimatedDuration(val) >= 0 || 'Invalid expression.']" :parser="parseEstimatedDuration" :formatter="formatEstimatedDuration"></FormattedInput>
+      <DurationInput :node="node" :value="node.estimatedDuration" :setValue="(v: number) => node.set_property('estimatedDuration', v)"></DurationInput>
       <p></p>
       <div class="info-list-item-label">Defer Until:</div>
       <DateInputPanel :node="node" :value="node.deferUntil" :setValue="(v: number) => node.set_property('deferUntil', v)"></DateInputPanel>
+      <p></p>
+      <div class="info-list-item-label">Due:</div>
+      <DateInputPanel :node="node" :value="node.due" :setValue="(v: number) => node.set_property('due', v)"></DateInputPanel>
     </InformationPanelCard>
   </q-list>
   <div class="text-h5 empty-selection" v-else>No Selection</div>
@@ -44,8 +49,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import InformationPanelCard from './InformationPanelCard.vue';
-import DateInputPanel from './DateInputPanel.vue';
-import FormattedInput from './components/FormattedInput.vue';
+import DateInputPanel from './components/DateInputPanel.vue';
+import DurationInput from './components/DurationInput.vue';
 
 const props = defineProps<{
   node: any;
@@ -123,37 +128,6 @@ const onInputChangeComplete = (evt) => {
   evt.target.blur();
   evt.target.select();
 };
-
-const re_number = new RegExp('^[0-9]+$');
-const re_duration = new RegExp('^(([0-9]+)y(ear(s)?)?)?(([0-9]+)m(onth(s)?)?)?(([0-9]+)w(eek(s)?)?)?(([0-9]+)d(ay(s)?)?)?(([0-9]+)h(our(s)?)?)?(([0-9]+)m(in(ute(s)?)?)?)?(([0-9]+)s(econd(s)?)?)?$');
-const parseEstimatedDuration = (val: string) => {
-  if (val.length == 0) return 0;
-  else if (re_number.exec(val)) return parseInt(val);
-  else {
-    const m_duration = re_duration.exec(val.replaceAll(' ', '').toLowerCase());
-    if (m_duration) {
-      let newValueInSecond = m_duration[2] ? parseInt(m_duration[2]) * 365 * 24 * 3600 : 0;
-      newValueInSecond += m_duration[6] ? parseInt(m_duration[6]) * 30 * 24 * 3600 : 0;
-      newValueInSecond += m_duration[10] ? parseInt(m_duration[10]) * 7 * 24 * 3600 : 0;
-      newValueInSecond += m_duration[14] ? parseInt(m_duration[14]) * 24 * 3600 : 0;
-      newValueInSecond += m_duration[18] ? parseInt(m_duration[18]) * 3600 : 0;
-      newValueInSecond += m_duration[22] ? parseInt(m_duration[22]) * 60 : 0;
-      newValueInSecond += m_duration[27] ? parseInt(m_duration[27]) * 1 : 0;
-      if (newValueInSecond == 0) return NaN;
-      return newValueInSecond;
-    } else return NaN;
-  }
-};
-const formatEstimatedDuration = (value: number) => {
-  if (value < 1) return '';
-  const day = parseInt(value / 86400);
-  const rm1 = value % 86400;
-  const hour = parseInt(rm1 / 3600);
-  const rm2 = rm1 % 3600;
-  const minute = parseInt(rm2 / 60);
-  const second = parseInt(rm2 % 60);
-  return (day ? day + 'd ' : '') + (hour ? hour + 'h ' : '') + (minute ? minute + 'min ' : '') + (second ? second + 's ' : '');
-};
 </script>
 
 <style>
@@ -194,5 +168,8 @@ const formatEstimatedDuration = (value: number) => {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+.info-panel-task-status-toggle {
+  border: 1px solid #027be3;
 }
 </style>

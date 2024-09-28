@@ -60,6 +60,9 @@ import wn from '../core/WhatsNext';
 wn.init();
 const tab = ref('projects');
 const splitterModel = ref(60);
+
+console.log(document.documentElement.clientWidth, document.documentElement.clientHeight);
+alert('' + document.documentElement.clientWidth + ', ' + document.documentElement.clientHeight);
 </script>
 
 <style>

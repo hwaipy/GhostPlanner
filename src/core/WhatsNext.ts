@@ -5,15 +5,15 @@ import moment from 'moment';
 class WhatsNext {
   status_id = 0;
   actions = [];
-  task_model = ref({
-    label: -1,
-    title: '',
-    children: [],
-    parent: null,
-  });
+  task_model = ref(
+    new Task({
+      whatsNext: this,
+      label: -1,
+    })
+  );
   tasks: any = {};
   validProperties = ['title', 'status', 'flagged', 'tags', 'estimatedDuration', 'deferUntil', 'due'];
-  tags = [];
+  tags: string[] = [];
 
   async init() {
     this.status_id = 0;
@@ -32,21 +32,13 @@ class WhatsNext {
   new_action(id: number, action: any) {
     switch (action.type) {
       case 'CreateTask':
-        const task = {
+        const task = new Task({
+          whatsNext: this,
           label: id,
           title: action.title,
           isProject: action.isProject,
-          children: [],
           parent: action.parent ? this.tasks[action.parent] : null,
-          status: 'Active', // Active, Completed, Dropped
-          tags: [],
-          flagged: false,
-          estimatedDuration: 0,
-          deferUntil: -1,
-          due: -1,
-          set_property: (key: string, value: any) => this.set_property(id, key, value),
-          get_project_node: () => this.get_project_node(this.get_task_node(id)),
-        };
+        });
         const parentChildrenList = task.parent ? this.tasks[action.parent].children : this.task_model.value.children;
         parentChildrenList.push(task);
         this.tasks[id] = parentChildrenList[parentChildrenList.length - 1];
@@ -60,7 +52,7 @@ class WhatsNext {
             modifiedTask[property] = action.newValue;
             if (property === 'tags') {
               for (const iTag in action.newValue) {
-                const tag: any = action.newValue[iTag];
+                const tag: string = action.newValue[iTag];
                 if (!this.tags.includes(tag)) {
                   this.tags.push(tag);
                 }
@@ -96,11 +88,13 @@ class WhatsNext {
     return this.tasks[id];
   }
 
-  set_property(task: number, key: string, newValue: any) {
-    this.create_action({ type: 'ModifyTask', task: task, property: key, oldValue: this.get_task_node(task)[key], newValue: newValue });
+  set_property(task: number, key: string, newValue: unknown) {
+    const oldValue = this.get_task_node(task)[key];
+    if (equals(oldValue, newValue)) return;
+    this.create_action({ type: 'ModifyTask', task: task, property: key, oldValue: oldValue, newValue: newValue });
   }
 
-  create_action(content: any) {
+  create_action(content: object) {
     this.status_id += 1;
     const action = { id: this.status_id, time: moment().format('YYYY-MM-DD HH:mm:ss.SSSSSS+08:00'), action: content };
     this.actions.push(action);
@@ -108,17 +102,56 @@ class WhatsNext {
     wnserver.append(action);
   }
 
-  get_project_node(taskNode: any): any {
+  get_project_node(taskNode: Task): Task {
     if (taskNode.label < 0) {
       console.log('Invalid task: root.');
       return taskNode;
     }
     if (taskNode.isProject) return taskNode;
+    if (taskNode.parent == null) throw 'Invalid Task Parent: null';
     return this.get_project_node(taskNode.parent);
   }
 }
 
-function equals(a: any, b: any) {
+class Task {
+  whatsNext: WhatsNext;
+  label: number;
+  title: string;
+  isProject: boolean;
+  children: Task[];
+  parent: Task | null;
+  status: string;
+  tags: string[];
+  flagged: boolean;
+  estimatedDuration: number;
+  deferUntil: number;
+  due: number;
+
+  constructor({ whatsNext, label, title = '', isProject = false, children = [], parent = null, status = 'Active', tags = [], flagged = false, estimatedDuration = 0, deferUntil = -1, due = -1 }: { whatsNext: WhatsNext; label: number; title?: string; isProject?: boolean; children?: Task[]; parent?: Task | null; status?: string; tags?: string[]; flagged?: boolean; estimatedDuration?: number; deferUntil?: number; due?: number }) {
+    this.whatsNext = whatsNext;
+    this.label = label;
+    this.title = title;
+    this.isProject = isProject;
+    this.children = children;
+    this.parent = parent;
+    this.status = status;
+    this.tags = tags;
+    this.flagged = flagged;
+    this.estimatedDuration = estimatedDuration;
+    this.deferUntil = deferUntil;
+    this.due = due;
+  }
+
+  set_property(key: string, value: any) {
+    this.whatsNext.set_property(this.label, key, value);
+  }
+
+  get_project_node() {
+    return this.whatsNext.get_project_node(this.whatsNext.get_task_node(this.label));
+  }
+}
+
+function equals(a: unknown, b: unknown) {
   if (Array.isArray(a)) {
     if (Array.isArray(b)) {
       if (a.length !== b.length) return false;
