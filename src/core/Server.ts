@@ -1,48 +1,36 @@
-class WhatsNextServer {
-  server_url = 'http://localhost:8002/s/';
+import { ActionRecord, ActionPayload, SyncedAction, SyncTransport } from './types';
+import { authHeader, logout } from './auth';
 
-  test() {
-    this.get_new_actions(15);
-  }
+interface PushAction {
+  uid: string;
+  ts: string;
+  action: ActionPayload;
+}
 
-  async get_new_actions(after: number) {
-    const response = await fetch(this.server_url + 'GetActions?after=' + after, {
-      method: 'GET',
-    });
-    if (response.ok) {
-      const content = await response.text();
-      const actions = JSON.parse(content);
-      return actions;
-    } else {
-      console.log('HTTP-Error in FETCH: ' + response.status);
-    }
-  }
-  
-  async append(action: any) {
-    const response = await fetch(this.server_url + 'AppendAction', {
+export class WhatsNextServer implements SyncTransport {
+  // In production the SPA is served by the Python server on the same origin, so
+  // use a relative URL (works behind HTTPS at plan.hwaipy.cn). In dev, talk to
+  // the local sync server directly on :8002.
+  server_url = import.meta.env?.PROD ? '/s/' : 'http://localhost:8002/s/';
+
+  async sync(name: string, after: number, actions: ActionRecord[]): Promise<SyncedAction[]> {
+    const push: PushAction[] = actions.map((a) => ({ uid: a.uid, ts: a.ts, action: a.action }));
+    const response = await fetch(this.server_url + 'Sync', {
       method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(action)
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify({ name, after, actions: push }),
     });
-    console.log(response);
-    
-    if (response.ok) {
-      // const content = await response.text();
-      // const actions = JSON.parse(content);
-      // return actions;
-      console.log('ok!!!');
-      
-    } else {
-      console.log('HTTP-Error in FETCH: ' + response.status);
+    if (response.status === 401) {
+      logout(); // token missing/expired -> drop back to the login screen
+      throw new Error('Unauthorized');
     }
-    console.log('try contact server');
-    
+    if (!response.ok) {
+      throw new Error('Sync failed: HTTP ' + response.status);
+    }
+    const body = await response.json();
+    return body.actions as SyncedAction[];
   }
 }
 
 const wnserver = new WhatsNextServer();
-
 export default wnserver;

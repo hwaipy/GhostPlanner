@@ -1,1 +1,193 @@
-// app global css in SCSS form
+// Global, OmniFocus-flavoured mobile styling.
+
+:root {
+  --gp-row: #ffffff;
+  --gp-row-press: #e8e8ed;
+  --gp-bg: #f2f2f7; // iOS grouped background
+  --gp-sep: rgba(60, 60, 67, 0.18);
+  --gp-text: #1c1c1e;
+  --gp-text-2: #8a8a8e;
+  --gp-circle: #c7c7cc;
+  --gp-header-blur: saturate(180%) blur(20px);
+  --gp-header-bg: rgba(255, 255, 255, 0.78);
+  --gp-ease: cubic-bezier(0.32, 0.72, 0, 1); // iOS-style decel curve
+  --gp-dur: 180ms;
+}
+.body--dark {
+  --gp-row: #1c1c1e;
+  --gp-row-press: #2c2c2e;
+  --gp-bg: #000000;
+  --gp-sep: rgba(84, 84, 88, 0.5);
+  --gp-text: #f2f2f7;
+  --gp-text-2: #98989f;
+  --gp-circle: #48484a;
+  --gp-header-bg: rgba(28, 28, 30, 0.78);
+}
+
+// Use the platform UI font, like a native app.
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+// Center the content column. On phones it spans full width; on larger screens
+// the column widens for comfortable reading next to the perspectives drawer.
+.gp-shell {
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 100%;
+  background: var(--gp-bg);
+}
+@media (min-width: 1024px) {
+  .gp-shell {
+    max-width: 760px;
+  }
+}
+@media (min-width: 1600px) {
+  .gp-shell {
+    max-width: 920px;
+  }
+}
+
+.gp-page {
+  background: var(--gp-bg);
+  min-height: 100%;
+  padding-bottom: 96px; // room for the FAB
+}
+
+// Grouped, inset list like iOS settings.
+.gp-list {
+  background: var(--gp-row);
+  border-radius: 12px;
+  margin: 12px;
+  overflow: hidden;
+}
+.gp-section-title {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--gp-bg);
+  color: var(--gp-text-2);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 18px 24px 6px;
+}
+
+// Task / project row
+.gp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  min-height: 52px;
+  background: var(--gp-row);
+  color: var(--gp-text);
+  position: relative;
+  cursor: pointer;
+  transition: background var(--gp-dur) var(--gp-ease);
+}
+.gp-item:hover,
+.gp-item:active {
+  background: var(--gp-row-press);
+}
+.gp-item + .gp-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 48px;
+  right: 0;
+  border-top: 0.5px solid var(--gp-sep);
+}
+.gp-item__main {
+  flex: 1;
+  min-width: 0;
+}
+.gp-item__title {
+  font-size: 16px;
+  line-height: 1.25;
+  color: var(--gp-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gp-item__title--done {
+  color: var(--gp-text-2);
+  text-decoration: line-through;
+}
+.gp-item__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 3px;
+}
+.gp-badge {
+  font-size: 11.5px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(120, 120, 128, 0.16);
+  color: var(--gp-text-2);
+  white-space: nowrap;
+}
+.gp-badge--due { color: #fff; background: #ff453a; }
+.gp-badge--soon { color: #fff; background: #ff9f0a; }
+.gp-badge--defer { color: var(--gp-text-2); }
+.gp-badge--tag { color: var(--gp-text-2); }
+.gp-badge--project {
+  position: relative;
+  padding-left: 16px;
+  color: var(--gp-text);
+  background: rgba(120, 120, 128, 0.12);
+}
+.gp-badge--project::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--gp-proj, var(--q-primary));
+  transform: translateY(-50%);
+}
+
+// Completion circle
+.gp-circle {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  cursor: pointer;
+}
+
+// Perspective tiles on the home screen
+.gp-tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--gp-row);
+  color: var(--gp-text);
+}
+.gp-tile__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.gp-tile__count {
+  color: var(--gp-text-2);
+  font-size: 15px;
+}
+
+.gp-empty {
+  text-align: center;
+  color: var(--gp-text-2);
+  padding: 64px 24px;
+  font-size: 15px;
+}

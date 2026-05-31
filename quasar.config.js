@@ -98,7 +98,7 @@ module.exports = configure(function (/* ctx */) {
       // directives: [],
 
       // Quasar plugins
-      plugins: [],
+      plugins: ['Notify'],
     },
 
     // animations: 'all', // --- includes all animations
@@ -146,7 +146,12 @@ module.exports = configure(function (/* ctx */) {
       manifestFilename: 'manifest.json',
       useCredentialsForManifestTag: false,
       // useFilenameHashes: true,
-      // extendGenerateSWOptions (cfg) {}
+      extendGenerateSWOptions(cfg) {
+        // Take over immediately on a new deploy so clients don't keep serving the
+        // old cached shell (paired with an auto-reload in register-service-worker).
+        cfg.skipWaiting = true;
+        cfg.clientsClaim = true;
+      },
       // extendInjectManifestOptions (cfg) {},
       // extendManifestJson (json) {}
       // extendPWACustomSWConf (esbuildConf) {}
